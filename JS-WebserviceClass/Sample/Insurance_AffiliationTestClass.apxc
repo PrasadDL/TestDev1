@@ -1,0 +1,211 @@
+@isTest(seeAllData=false)
+public class Insurance_AffiliationTestClass {
+
+    static List<product2> productList;
+    static List<Account> accsList;
+    static List<Contact> providerList;
+    Static List<Id> providerIds;
+    Static List<Id> productIds;
+    
+    //Static boolean setBulkLimit=false;
+    
+    Static Integer maxProvidersReg=5;
+    Static Integer maxProductsReg=5;
+    
+    Static Integer maxProvidersBulk=5;
+    Static Integer maxProductsBulk=5;
+        
+    private static void setBulkLimit()
+    {
+        	//Option 1
+        	Organization org = [SELECT id, Name FROM Organization];
+			Id orgId1 = org.Id;
+        	
+        	if(orgId1.equals('00D8A0000000OqoUAE'))
+        		{
+           			// 
+           			System.debug('Organization Id is:'+orgId1);
+           			System.debug('The organization id matches');
+           			maxProvidersBulk=20;
+    	   			maxProductsBulk=25; 
+        		}    
+    }
+
+    //Method to create sample data, need to have input parameters for this method 
+    private static void createSampleData(Integer maxProviders, Integer maxProducts){
+       
+        //Initialize
+        accsList = new List<Account>();
+        productList = new List<product2>();
+    	providerList= new List<Contact>();
+    	providerIds= new List<Id>();
+    	productIds= new List<Id>();
+        
+        //Insert Accounts
+        //Get the record type 
+        Schema.DescribeSObjectResult cfrSchema1 = Schema.SObjectType.Account; 
+        Map<String,Schema.RecordTypeInfo> AccountRecordTypeInfo1 = new Map<String,Schema.RecordTypeInfo>();
+        AccountRecordTypeInfo1 = cfrSchema1.getRecordTypeInfosByName();
+        Id accountRecordTypeId=AccountRecordTypeInfo1.get('Provider Account Individual or LLC').getRecordTypeId(); 
+        
+        //Insert Accounts
+        for (Integer i=0; i<maxProviders; i++) {
+            accsList.add(new  Account(Name='TestProviderAccount'+i,RecordTypeId=accountRecordTypeId));
+        }        
+        insert accsList;
+        
+        //Create providers
+        providerList= new List<Contact>();
+        
+        //Contact record types 
+        Schema.DescribeSObjectResult cfrSchema2 = Schema.SObjectType.Contact; 
+        Map<String,Schema.RecordTypeInfo> ContactRecordTypeInfo1 = new Map<String,Schema.RecordTypeInfo>();
+        ContactRecordTypeInfo1 = cfrSchema2.getRecordTypeInfosByName(); 
+        Id contactRecordTypeId=ContactRecordTypeInfo1.get('Provider Contact').getRecordTypeId();
+        
+        //Insert Providers
+        for (Integer i=0; i<maxProviders; i++) {
+            providerList.add(new Contact(LastName = 'sampleProvider '+i,Email='sampleprovider'+i+'@gmail.com', AccountId = accsList.get(i).id, RecordTypeId=contactRecordTypeId,BT_Approval_State_on_Site__c='Active',MDL_Affiliation_Date__c=system.today(),MDL_Temp_Inactive__c=null));
+        }
+        insert providerList;
+        
+        providerIds = new List<Id>();
+        for(Contact p: providerList)
+        {
+            providerIds.add(p.id);
+        }
+        
+       //Insert Products 
+       for (Integer i=0; i<maxProducts; i++) {
+            productList.add(new product2(Name = 'MDLIVETestProduct1'+i,IsActive=true,MDLIVE__c=true));
+        }
+        insert productList;
+        
+        for(product2 p: productList)
+        {
+            productIds.add(p.id);
+        }
+             
+    }//End of sample data creation
+    
+    //The method to perform regular tests with providers
+    @isTest static void TestInsertInsuranceAffiliationWithProvidersRegular() {
+    
+        //Test method when count request is false        
+        //create data
+        //Integer maxProviders=5; //Set to 200 to validate real bulk tests
+        //Integer maxProducts=5;
+        Integer IAcount;
+        List<Insurance_Affiliation__c> lstAffiliation;
+        createSampleData(maxProvidersReg,maxProductsReg);
+        //call functions
+        //Perform test
+        Test.startTest();
+        //This method inserts insurance affiliation records by looping providers
+        IAcount = Insurance_AffiliationClass.populateIARecordsProviders(providerIds,false);
+        Test.stopTest();
+        
+        //assert results
+        System.assertEquals(maxProvidersReg*maxProductsReg,IAcount);
+		lstAffiliation=[select id from Insurance_Affiliation__c where Provider_Name__r.id IN :providerIds];
+		System.assertEquals(maxProvidersReg*maxProductsReg,lstAffiliation.size());
+        
+    }
+    
+    //The method to perform bulk tests with providers 
+   	@isTest static void TestInsertInsuranceAffiliationWithProvidersBulk() {
+    
+        //Limits: providers * products < 5000 else dml exception, only for test class as in real case the class is called by button & each call to button is separate apex transaction
+        //Bulk test, more than 500 IA records are inserted 
+        //Test method when count request is false         
+        //create data
+        
+        //Set bulk limit depending on the organization
+        setBulkLimit();
+        
+        Integer IAcount;
+        List<Insurance_Affiliation__c> lstAffiliation;
+        Integer callMethod = (maxProvidersBulk*maxProductsBulk)/500;
+        createSampleData(maxProvidersBulk,maxProductsBulk);
+        //call functions
+        //Perform test
+        Test.startTest();
+        //This method inserts insurance affiliation records by looping providers
+        //IAcount = Insurance_AffiliationClass.populateIARecordsProviders(providerIds,false);
+        while(callMethod>=0)
+            {
+                IAcount = Insurance_AffiliationClass.populateIARecordsProviders(providerIds,false);                
+                callMethod--;
+            }
+
+        Test.stopTest();
+        
+        //assert results
+		lstAffiliation=[select id from Insurance_Affiliation__c where Provider_Name__r.id IN :providerIds];
+		System.assertEquals(maxProvidersBulk*maxProductsBulk,lstAffiliation.size());
+    }
+    
+    //The method to perform regular tests with products
+    @isTest static void TestInsertInsuranceAffiliationWithProductsRegular() {
+        
+        //Test method when count request is false          
+        //create data
+        //Integer maxProviders=5; //do not set value such that maxProviders*maxProducts > 500   
+        //Integer maxProducts=5;
+        Integer IAcount;
+        Integer IAcountAllPrpducts; 
+        List<Insurance_Affiliation__c> lstAffiliation;
+        createSampleData(maxProvidersReg,maxProductsReg);
+        //call functions
+        //Perform test
+        Test.startTest();
+        //This method inserts insurance affiliation records by looping products
+        //Get the record count for all products, by setting the selectAll as true
+        IAcountAllPrpducts=Insurance_AffiliationClass.populateIARecordsProducts(productIds,true,true);
+        IAcount = Insurance_AffiliationClass.populateIARecordsProducts(productIds,false,false);            
+        Test.stopTest();
+        //assert results
+        //
+        System.assertEquals(maxProvidersReg*maxProductsReg,IAcountAllPrpducts);
+        System.assertEquals(maxProvidersReg*maxProductsReg,IAcount);
+        //Check whether insurance affliation records has been inserted
+        lstAffiliation=[select id from Insurance_Affiliation__c where Insurance_Plan__r.id IN :productIds];
+		System.assertEquals(maxProvidersReg*maxProductsReg,lstAffiliation.size());
+    }
+        
+    //The method to perform bulk tests with products
+    @isTest static void TestInsertInsuranceAffiliationWithProductsBulk() {
+    
+        //Limits: providers * products < 5000 else dml exception, only for test class as in real case the class is called by button & each call to button is separate apex transaction
+        //Bulk test, more than 500 IA records are inserted 
+        //Test method when count request is false         
+       	
+        //Set bulk limit depending on the organization
+        setBulkLimit();
+        
+        Integer IAcount;
+        Integer IAcountAllPrpducts;
+        List<Insurance_Affiliation__c> lstAffiliation;
+        Integer callMethod = (maxProvidersBulk*maxProductsBulk)/500;
+        createSampleData(maxProvidersBulk,maxProductsBulk);
+        //call functions
+        //Perform test
+        Test.startTest();
+        
+        //Get the record count for all products, by setting the selectAll as true
+        IAcountAllPrpducts=Insurance_AffiliationClass.populateIARecordsProducts(productIds,true,true);
+        //This method inserts insurance affiliation records by looping providers
+        //IAcount = Insurance_AffiliationClass.populateIARecordsProviders(providerIds,false);
+        while(callMethod>=0)
+            {
+                IAcount = Insurance_AffiliationClass.populateIARecordsProducts(productIds,false,false);                
+                callMethod--;
+            }
+        Test.stopTest();        
+        //assert results
+		System.assertEquals(maxProvidersBulk*maxProductsBulk,IAcountAllPrpducts);        
+		lstAffiliation=[select id from Insurance_Affiliation__c where Insurance_Plan__r.id IN :productIds];
+		System.assertEquals(maxProvidersBulk*maxProductsBulk,lstAffiliation.size());
+    }
+            
+}

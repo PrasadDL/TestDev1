@@ -1,0 +1,137 @@
+public class Insurance_AffiliationClass {
+
+    //public static boolean countRequest= false;
+    //Method to populate insurance affiliation records on contact/provider page
+    
+    //Method to populate insurance affilition records when provider Ids are passed
+    public static Integer populateIARecordsProviders(List<Id> providerIds,boolean countRequest)    
+    {
+        //Select required provider contacts
+        Map<Id, Contact> providerContact= new Map<Id, Contact>([select id FROM Contact WHERE recordtype.name like '%Provider Contact%' and BT_Approval_State_on_Site__c='active' and MDL_Affiliation_Date__c!=null and MDL_Temp_Inactive__c=null and id IN :providerIds]);
+        
+        //system.debug('*********************provider size****************'+providerContact.size());
+        //system.debug('*********************provider key set: ****************'+providerContact.keyset());
+        
+        //Pullup all product mdlive product list for insurance affiliations   
+        list<product2> plist=[select id from product2 where name like 'MDLIVE%' and IsActive=true];             
+        
+        system.debug('*********************Products size****************'+plist.size());
+        
+        //put a validation here for products if possible
+        //Pullup all related existing affiliation records for the selected provider contacts    
+        list<Insurance_Affiliation__c> ialist=[select id,Provider_Name__r.id,Insurance_Plan__r.id from Insurance_Affiliation__c where Insurance_Plan__r.name like 'MDLIVE%' and Insurance_Plan__r.isactive=true and Provider_Name__r.id IN :providerContact.keyset()];        
+        //system.debug('*********************existing affiliation size****************'+ialist.size());
+        
+        //Map for checking existing affiliation records        
+        map<string,string> iaMap=new map<string,string>();            
+        for(Insurance_Affiliation__c ia:ialist){
+            iaMap.put(ia.Provider_Name__r.id+''+ia.Insurance_Plan__r.id,ia.Provider_Name__r.id+''+ia.Insurance_Plan__r.id);
+        }
+        //system.debug('*********************iaMap size****************'+iaMap.size());
+        //system.debug('*********************iaMap key values****************'+iaMap.keyset());
+        
+        //List to add new Insurance Affiliation records
+        list<Insurance_Affiliation__c> newIAList=new list<Insurance_Affiliation__c>();        
+        Integer newIAcount=0;   
+        for(contact c:providerContact.values()){
+            for(product2 p:plist){
+                string cp=c.id+''+p.id;
+                if(iaMap.containsKey(cp)){
+                    //do nothing
+                }else{
+                    if(newIAcount<500){    
+                        newIAList.add(new Insurance_Affiliation__c(Active__c=true,Insurance_Plan__c=p.id,Provider_Name__c=c.Id));
+                    }
+                    newIAcount++;   
+                }
+            }
+        }
+        //system.debug('*********************new affiliation records size****************'+newIAList.size());
+        //system.debug('*********************new affiliation records full count****************'+newIAcount);
+        if(!countRequest){
+            insert newIAList;
+        //    System.debug('Number of rows queried in this apex code so far: ' + Limits.getDmlRows());
+        }
+        return newIAcount;
+    }
+    
+    //Method to populate insurance affilition records when product Ids are passed
+    public static Integer populateIARecordsProducts(List<Id> productIds,boolean countRequest,boolean selectAll)
+    {
+        //Select required provider contacts
+        //Need to select only providers that does not have Product or it will return really big list        
+        //There will be lot of providers, need to cut it down
+        List<Contact> providerList=[select id FROM Contact WHERE recordtype.name like '%Provider Contact%' and BT_Approval_State_on_Site__c='active' and MDL_Affiliation_Date__c!=null and MDL_Temp_Inactive__c=null];        
+        
+        system.debug('*********************Providers size****************'+providerList.size());
+        system.debug('*********************Providers size****************'+providerList.size());
+        
+      
+        //Pullup all product mdlive product list for insurance affiliations
+        //Pullup only required products              
+        Map<Id, product2> productList = null;
+        
+        System.debug('**********ProductId values:**'+productIds);
+        System.debug('********* ProductIds Empty:'+productIds.isEmpty());
+        System.debug('**********ProductId Size:***'+productIds.size());
+        System.debug('********ProductId equal with null object:****'+ productIds.equals(NULL));
+        System.debug('********Product Id null test:');
+        System.debug(productIds==NULL);
+        
+        
+         if(!selectAll){
+            //Select only required products
+        	productList=new Map<Id, product2>([select id from product2 where name like 'MDLIVE%' and IsActive=true and id IN :productIds]);            
+        }else{
+            //Select all products if selectAll is true
+        	productList=new Map<Id, product2>([select id from product2 where name like 'MDLIVE%' and IsActive=true]);
+        } 
+        system.debug('*********************Products size****************'+productList.size());
+        
+        //Pullup all related existing affiliation records for the selected provider contacts    
+        //list<Insurance_Affiliation__c> ialist=[select id,Provider_Name__r.id,Insurance_Plan__r.id from Insurance_Affiliation__c where Insurance_Plan__r.name like 'MDLIVE%' and Insurance_Plan__r.isactive=true and Provider_Name__r.id IN :providerContact.keyset()];
+        list<Insurance_Affiliation__c> ialist=[select id,Provider_Name__r.id,Insurance_Plan__r.id from Insurance_Affiliation__c where Insurance_Plan__r.name like 'MDLIVE%' and Insurance_Plan__r.isactive=true and Insurance_Plan__r.id IN :productList.keyset() and Provider_Name__r.id IN :providerList];   
+        
+        system.debug('*********************existing affiliation size****************'+ialist.size());
+        system.debug('*********************existing affiliation values****************'+ialist);
+        //Map for checking existing affiliation records        
+        map<string,string> iaMap=new map<string,string>();            
+        for(Insurance_Affiliation__c ia:ialist){
+            iaMap.put(ia.Provider_Name__r.id+''+ia.Insurance_Plan__r.id,ia.Provider_Name__r.id+''+ia.Insurance_Plan__r.id);
+        }
+        
+        //List to add new Insurance Affiliation records
+        list<Insurance_Affiliation__c> newIAList=new list<Insurance_Affiliation__c>();        
+        Integer newIAcount=0;
+        
+        for(product2 p:productList.values())
+        {
+            for(contact c:providerList)
+            {
+                string cp=c.id+''+p.id;
+                if(iaMap.containsKey(cp)){
+                    //do nothing
+                }
+                else{
+                    if(newIAcount<500){    
+                        newIAList.add(new Insurance_Affiliation__c(Active__c=true,Insurance_Plan__c=p.id,Provider_Name__c=c.Id));
+                    }
+                    newIAcount++;
+                }
+            }
+        }
+        system.debug('*********************new affiliation records size****************'+newIAList.size());
+        system.debug('*********************new affiliation records full count****************'+newIAcount);
+        if(!countRequest){
+            insert newIAList;
+       	    System.debug('Number of rows queried in this apex code so far: ' + Limits.getDmlRows());
+        }
+        System.debug('*********CPU Time: ' + Limits.getCpuTime());
+        System.debug('***********DML Rows: ' + Limits.getDmlRows());
+        System.debug('***********Heap Size: ' + Limits.getHeapSize());
+        System.debug('***********Queries: ' + Limits.getQueries());
+        System.debug('***********Query rows: ' + Limits.getQueryRows());
+        return newIAcount;
+    }
+    
+}
