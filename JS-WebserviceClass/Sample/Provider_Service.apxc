@@ -1,0 +1,45 @@
+/*
+This class is written for JS button .
+
+The button can call this class/method to populate MDLive afficilation records, the button is provided on contact record page
+
+*/
+
+global without sharing class Provider_Service{
+    
+    //Create records of Insurance Affiliation with the provided ContactId & other MDLIVE products
+    webservice static String createInsuranceAffiliationRecords(List<Id> providerIds,boolean countRequest){
+        
+        system.debug('*********Provider Ids:'+providerIds);
+        system.debug('*********CountRequest:'+countRequest);
+        
+        //Provider_Class.countRequest=countRequest;
+        //integer newIAcount=Provider_Class.populateInsuranceAffiliationRecords(providerIds);
+        integer newIAcount= Insurance_AffiliationClass.populateIARecordsProviders(providerIds,countRequest);
+        if(countRequest){
+            return  'Records to be added: '+newIAcount;
+        }else{
+            if(newIAcount>=500){
+                return '500 Records added out of '+newIAcount+'. Please run again';
+            }else{
+                return 'Records added: '+newIAcount;
+            }
+        }
+    }
+    
+    //Calculate minimum charge fee for chargent record
+    webservice static Integer calculateChargentFee(String providerId){
+        
+        system.debug('*********Provider Id:'+providerId);
+        
+        integer newFee=Chargent_Class.calculateMinChargentFee(providerId);
+        
+        if(newFee>=0)
+        {
+            return newFee;
+        }
+        return null;
+    }
+    
+       
+}
