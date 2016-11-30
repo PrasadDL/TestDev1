@@ -1,0 +1,72 @@
+public class BarChartController {
+
+    public List<PositionData> getBarChartControllerData()  {
+      // SOQL query to get the count of positions in each functional area
+    
+ List<AggregateResult> dataList1 = [select count(Name) cnt1, Contract_Signed__c from Implementations__c group by Contract_Signed__c order by Contract_Signed__c asc];
+
+    
+        // SOQL query to get the count of Open positions in each functional area                                          
+ //List<AggregateResult> dataList2 = [select count(Name) cnt2, Contract_Signed__c from Implementations__c group by Contract_Signed__c order by Contract_Signed__c asc];
+        
+        list<SelectOption> options = new list<SelectOption>();
+  // PickListController is used to get values from Functional area picklist
+          options = PickListController.getPicklistValues(new Implementations__c(),'Contract_Signed__c');
+        
+        List<PositionData> posList = new List<PositionData>();
+          PositionData pos;
+          Integer j=0,k=0;
+        for (Integer i=0; i<options.size(); i++){
+                 pos = new PositionData();
+                 String FAList1 ='';
+                 String FAList2 ='';
+                 String FAPickList = null;
+             if(i!=0){
+                  FAPickList = options[i-1].getLabel();
+              }
+             if(j < dataList1.size()){
+                 FAList1 = String.valueOf(dataList1[j].get('Contract_Signed__c'));
+              }
+            
+              /*if(k < dataList2.size()){
+                  FAList2 = String.valueOf(dataList2[k].get('Contract_Signed__c'));
+              }*/
+			  
+              //if(FAPickList == FAList1 && FAPickList == FAList2){
+                  if(FAPickList == FAList1){
+                  pos.posCount1= Double.valueOf(dataList1[j].get('cnt1'));
+                  //pos.posCount2= Double.valueOf(dataList2[k].get('cnt2'));
+                  pos.Contract_Signed = FAPickList;
+                  j++;
+                  //k++;
+              }
+                    //else if(FAPickList == FAList1 && FAPickList!= FAList2){
+                    //else if(FAPickList == FAList1){    
+                   // pos.posCount1= Double.valueOf(dataList1[j].get('cnt1'));
+                   // pos.posCount2= 0;
+                   // pos.Contract_Signed = FAPickList ;
+                   // j++;
+              //}
+              else{
+                  pos.posCount1= 0;
+                  pos.posCount2= 0;
+                  pos.Contract_Signed = FAPickList ;
+              }
+              if(i==0){
+                  pos.Contract_Signed = 'Others';
+              } 
+              posList.add(pos);            
+        }//for loop ends here  
+            
+        return posList; 
+        
+        //return null;   
+    }   
+        
+// Wrapper class for bar Chart 
+       public class PositionData{ 
+          public Double posCount1{get; set;}
+          public Double posCount2{get; set;}
+          public String Contract_Signed {get; set;}
+      }    
+}

@@ -1,0 +1,22 @@
+/* 
+Author : Prasad D. Lakhangaonkar 
+7/26/2016: Created, added logic to populate fields of chargent record 
+*/ 
+
+{!REQUIRESCRIPT("/soap/ajax/31.0/connection.js")} 
+//alert('JS is working'); 
+
+//Placeholder for chargent record 
+var Chargent_record = new sforce.SObject("ChargentOrders__ChargentOrder__c"); 
+
+//Date formatting, to populate date field 
+var date=new Date('{!NOW()}'); 
+var dateString = date.toString(); 
+dateString = DateUtil.getDateTimeStringFromUserLocale(date); 
+
+//EditPage of Chargent order record 
+var newURL = '/' + 'a0b' + '/e?00N33000002yfpy=45.00&00N33000002yfqO=Credit Card&00N33000002yfq6='+dateString+'&CF00N33000002yfsW={!Contact.Name}&retURL={!Contact.Id}&00N33000002yfqB='+1; 
+
+window.open(newURL);
+
+/a0E/e?

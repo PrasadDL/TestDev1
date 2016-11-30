@@ -1,0 +1,84 @@
+
+
+//var dialog = $( "#dialog" ).dialog({
+  close: function( event ) {
+    if ( event.originalEvent ) {
+      alert( "close button!" );
+    }
+  }
+});
+
+
+
+//dialog block
+{!REQUIRESCRIPT("/soap/ajax/31.0/connection.js")} 
+{!REQUIRESCRIPT("/soap/ajax/18.0/apex.js")}
+{!REQUIRESCRIPT('//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js')}
+{!REQUIRESCRIPT('//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js')}
+ 
+try{
+  jQuery(function() {
+    /*Append the jQuery CSS CDN Link to the Head tag.*/
+    jQuery('head').append('<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/start/jquery-ui.css" type="text/css" />');
+    
+    /*Create the HTML(DIV Tag) for the Dialog.*/
+    var html = 
+      '<div id="dialog" title="Insurance Affiliation records"><p>1.Insert records: click Insert <br/>2.Get records size: Click Size<br/></p><div id="myDialogText"></div> </div>';
+    
+    /*Check if the Dialog(DIV Tag) already exists if not then Append the same to the Body tag.*/
+
+
+    if(!jQuery('[id=dialog]').size()){
+      jQuery('body').append(html);
+    }    
+    /*Open the jQuery Dialog.*/ 
+    jQuery( "#dialog" ).dialog({
+      autoOpen: true,
+      modal: true,
+      show: {
+        effect: "bounce",
+        duration: 500
+      },
+      hide: {
+        effect: "bounce",
+        duration: 500
+      },
+      buttons: {
+        Insert: function() {
+          //location.replace('/home/home.jsp');
+          functionInsert();
+          //jQuery( this ).dialog( "close" );
+        },
+          Size: function() {
+          functionSize();
+          //jQuery( this ).dialog( "close" );
+        },
+        Cancel: function() {
+          //myFunction();
+          jQuery( this ).dialog( "close" );
+        }
+      }
+    });
+  });
+  
+  function functionInsert() {
+  //this should be ajax call, need to have a call back function
+  //alert('Call insert function here ');
+var msg =    sforce.apex.execute("Provider_Service","createInsuranceAffiliationRecords",{providerIds:  "{!Contact.Id}", countRequest: false});         
+//alert(msg);
+jQuery("#myDialogText").text('Result: '+msg);  
+}
+
+function functionSize() {
+  //this should be ajax call, need to have a call back function
+  //alert('Call size function here');
+var msg =    sforce.apex.execute("Provider_Service","createInsuranceAffiliationRecords",{providerIds:  "{!Contact.Id}", countRequest: true});         
+//alert(msg);
+jQuery("#myDialogText").text('Result: '+msg);
+
+}
+ 
+}
+catch(e){
+alert('An Error has Occured. Error: ' + e);
+}

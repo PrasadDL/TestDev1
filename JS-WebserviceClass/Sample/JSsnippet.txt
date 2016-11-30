@@ -1,0 +1,17 @@
+
+//Chargent_record.ChargentOrders__Charge_Amount__c= "{!}"{!NOW()};
+
+
+&00N33000002yfq6='+{!NOW()}
+00N33000002yfq6='+DateTime.now().format().escapeHtml4()
+
+var d = new Date(eventtime);
+var dateString = d.toString();
+dateString = DateUtil.getDateTimeStringFromUserLocale(d);
+
+
+https://cs45.salesforce.com/a0b/e?CF00N33000002yfsW=testprovider+test123&CF00N33000002yfsW_lkid=0038A000003v2aX&retURL=%2F0038A000003v2aX
+
+var newURL = '/' + 'a0b' + '/e?00N33000002yfpy=45.00&00N33000002yfqO=Credit Card&00N33000002yfq6='+dateString+'&CF00N33000002yfsW={!Contact.Id.N}';
+
+0038A000003v2aX 

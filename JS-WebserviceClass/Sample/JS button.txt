@@ -1,0 +1,17 @@
+sfTTObj.id = '{!SF_Transition_Ticket__c.Id}'; 
+
+a0b
+
+var newURL = '/' + result[0].id + '/e?00N33000002yfpy=45.00&00N33000002yfqO=Credit Card'; 
+//if(result[0].getBoolean("success"))
+{
+
+var newURL = '/' + a0b + '/e?00N33000002yfpy=45.00&00N33000002yfqO=Credit Card'; 
+window.open(newURL);
+
+//alert('Success record created, open new window to update other fields ');
+}
+else
+{
+alert('Error : '+result);
+}

@@ -1,0 +1,54 @@
+//New Code
+if (confirm('Are you sure you want to populate insurance affiliation records')) {
+    // Save it!
+   if (confirm(''))
+	{
+	
+	}
+	else {
+
+		// Do nothing!
+	}
+} else {
+
+    // Do nothing!
+}
+
+
+//alert(msg);
+//location.reload();
+
+//New Code jquery has been loaded 
+ var j$ = jQuery.noConflict();
+if (window.jQuery) {  
+// jQuery is loaded
+alert('loaded');
+  
+} else {
+    // jQuery is not loaded
+}
+//jquery ends here
+
+
+////New Code
+if (confirm('Populate insurance affiliation records or get new insurance affiliation records size')) {
+    // Save it!
+   if (confirm('Insurance affiliation records size?'))
+	{
+	 //call function with countRequest false
+var msg =    sforce.apex.execute("Provider_Service","createInsuranceAffiliationRecords",{providerIds:  "{!Contact.Id}", countRequest: true});         
+
+alert(msg);
+	}
+	else 
+        {
+        //Call function without countRequest true
+var msg =    sforce.apex.execute("Provider_Service","createInsuranceAffiliationRecords",{providerIds:  "{!Contact.Id}", countRequest: false});
+
+alert(msg);         
+
+	}
+} else {
+
+    // Do nothing!
+}
