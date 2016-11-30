@@ -1,0 +1,96 @@
+@RestResource(urlMapping='/productOperations/*')
+global with sharing class ProductRest{
+
+/*
+    @HttpDelete
+    global static void doDelete() {
+        //Sample for account record deletion
+        RestRequest req = RestContext.request;
+        RestResponse res = RestContext.response;
+        String accountId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+        Account account = [SELECT Id FROM Account WHERE Id = :accountId];
+        delete account;
+    }
+  
+    @HttpGet
+    global static Integer doGet(){
+        
+        //Sample for number of accounts
+        RestRequest req = RestContext.request;
+     	RestResponse res = RestContext.response;
+        //this function is independent of this statement, this shows how to get url parameter
+        String accountId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+        Integer result = [SELECT Count() from Account ];            
+        return result;
+    }
+*/  
+  	@HttpPost
+    global static RestWrapper doPost() 
+    {    
+        //String orgName, Boolean orgCheck(optional parameters)
+        //If the Apex method has no parameters, then Apex REST copies the HTTP request body into the RestRequest.requestBody
+         RestRequest req = RestContext.request;
+        RestResponse res = RestContext.response;
+        res.addHeader('Content-Type', 'application/json');
+   
+        System.debug('Request:'+req);
+        
+        //request body is blob, more info: https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_methods_system_restrequest.htm%23apex_System_RestRequest_Properties
+        
+        System.debug('Request body in string:'+JSON.deserializeuntyped(req.requestbody.tostring()));
+        System.debug('Request body raw:'+req.requestBody);
+     
+        Map<String, Object> reqJSON = (Map<String, Object>)JSON.deserializeUntyped(req.requestbody.tostring());
+        String varOperation=(String)reqJSON.get('Operation'); 
+        Map<String, Object> ObjectOpportunityJSON = (Map<String, Object>)reqJSON.get('ObjectOpportunity');
+        String varId=(String)ObjectOpportunityJSON.get('Id'); 
+        String varName=(String)ObjectOpportunityJSON.get('Name'); 
+        Date varGoLiveDate = date.valueOf((String)ObjectOpportunityJSON.get('Go_Live_Date__c'));
+        String varContract=(String)ObjectOpportunityJSON.get('Contract__c'); 
+        Decimal varMySQLID=decimal.valueOf((String)ObjectOpportunityJSON.get('MySQL_ID__c')); 
+        String varURL=(String)ObjectOpportunityJSON.get('URL__c'); 
+        String varTherapyConsultFee=String.valueOf((Decimal)ObjectOpportunityJSON.get('Therapy_Consult_Fee__c')); 
+
+		list<product2> existingProduct=[select id from product2 where MDL_SFID__c=:varId];
+        res.statusCode = 200;
+    	JSONGenerator gen = JSON.createGenerator(true);
+    	gen.writeStartObject();
+		gen.writeStringField('BTResponse','Received');
+        //Insert the same request again
+    //    gen.writeFieldName('MDLRequest');
+   	//	gen.writeObject('Exist'); 
+		if(existingProduct.size()>0){
+			gen.writeStringField('BTAction','Existing');
+    	}else{
+			product2 newProduct=new product2(MDL_SFID__c=varId,Go_Live_Date_in_BT__c=varGoLiveDate,MDL_Contract_ID__c=varContract,MDL_Payer_Name__c=varName,name='MDLIVE '+varName,MDL_Payer_ID__c=varMySQLID,MDL_URL__c=varURL,MDL_Benefit_Explanation__c=varTherapyConsultFee
+			,Geo_Loc__c='CA;AK;AL;AR;AS;AZ;CO;CT;DC;DE;FL;GA;HI;IA;ID;IL;IN;KS;KY;LA;MA;MD;ME;MI;MN;MO;MS;MT;NC;ND;NE;NH;NJ;NM;NV;NY;OH;OK;OR;PA;RI;SC;SD;TN;TX;UT;VA;VT;WA;WI;WV;WY'
+			,Geo_Loc_Text__c='AK; AL; AR; AS; AZ; CA; CO; CT; DC; DE; FL; GA; HI; IA; ID; IL; IN; KS; KY; LA; MA; MD; ME; MI; MN; MO; MS; MT; NC; ND; NE; NH; NJ; NM; NV; NY; OH; OK; OR; PA; RI; SC; SD; TN; TX; UT; VA; VT; WA; WI; WV; WY'
+			,IsActive =true
+			,CPT_Restricted__c=true
+			,Signed_with_Breakthrough__c=true 
+			,MDLIVE__c =true
+			,BT_Id_Required__c=false
+			,BT_Phone_Required__c=false 
+			,BT_Soap_Note_Required__c =true
+			,BT_Presession_Required__c =true
+			,BT_Care_Manager_Phone_Required__c=false 
+			,BT_Care_Manager_Prompt__c =false
+			);
+			insert newProduct;
+			gen.writeStringField('BTAction','Inserted');
+			gen.writeStringField('BTSFID',newProduct.Id);
+		}
+        //Send back the same request again:
+          	gen.writeEndObject();
+        	String jsonResponse = gen.getAsString();
+//            res.responseBody = Blob.valueOf(jsonResponse);
+            res.responseBody = Blob.valueOf(req.requestbody.tostring());
+            RestWrapper response=new RestWrapper();
+            response.message=jsonResponse;
+        	return response;
+   
+    }
+       global class RestWrapper {          
+          public String message;
+     }    
+}

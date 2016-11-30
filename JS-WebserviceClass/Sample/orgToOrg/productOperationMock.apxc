@@ -1,0 +1,24 @@
+public class productOperationMock implements HttpCalloutMock {
+         
+        Boolean isMockResponseSuccessful;
+         
+        public productOperationMock(Boolean isMockResponseSuccessful) {
+            this.isMockResponseSuccessful   = isMockResponseSuccessful;
+        }
+         
+        public HttpResponse respond(HttpRequest rqst) {
+            HttpResponse hResp      = new HttpResponse();
+            if (this.isMockResponseSuccessful) {
+                hResp.setStatusCode(200);
+                hResp.setBody('{'+
+  								'"BTResponse" : "Received",'+
+ 								'"MDLRequest" : {"Operation" : "Insert","ObjectOpportunity":'+
+                              '{"attributes" : {"type":"Opportunity2__c","url" : "/services/data/v38.0/sobjects/Opportunity2__c/a1Wg0000003VgDIEA0"},"Id" : "a1Wg0000003VgDIEA0","Name" : "Neeraja opp","Go_Live_Date__c" : "2016-09-16"  }}}');                
+            }
+            else {
+                hResp.setStatusCode(400);
+                hResp.setStatus('Bad request');
+            }
+            return hResp;
+        }
+    }
